@@ -1,0 +1,173 @@
+{
+	"description" : "스포츠 달력 바탕화면 - KBO / EPL / Google Calendar / 재생 중인 음악",
+	"file" : "index.html",
+	"general" : 
+	{
+		"properties" : 
+		{
+			"bgopacity" : 
+			{
+				"index" : 6,
+				"max" : 1,
+				"min" : 0,
+				"order" : 106,
+				"precision" : 2,
+				"text" : "배경 영상 투명도 (0~1)",
+				"type" : "slider",
+				"value" : 0.28
+			},
+			"bgvideo" : 
+			{
+				"index" : 5,
+				"order" : 105,
+				"text" : "배경 영상 경로 (예: assets/bg/doosan.mp4)",
+				"type" : "textinput",
+				"value" : ""
+			},
+			"eplapikey" : 
+			{
+				"index" : 3,
+				"order" : 103,
+				"text" : "football-data.org API Key",
+				"type" : "textinput",
+				"value" : ""
+			},
+			"eplteam" : 
+			{
+				"index" : 2,
+				"order" : 102,
+				"text" : "EPL 팀 이름 (영문, 예: Manchester City)",
+				"type" : "textinput",
+				"value" : "Manchester City"
+			},
+			"eventlist" : 
+			{
+				"index" : 8,
+				"order" : 108,
+				"text" : "개인 일정 (MM-DD:내용 | 구분. 예: 06-25:치과 | 06-30:약속)",
+				"type" : "textinput",
+				"value" : ""
+			},
+			"gcalclientid" : 
+			{
+				"index" : 12,
+				"order" : 112,
+				"text" : "Google Client ID",
+				"type" : "textinput",
+				"value" : ""
+			},
+			"gcalclientsecret" : 
+			{
+				"index" : 13,
+				"order" : 113,
+				"text" : "Google Client Secret",
+				"type" : "textinput",
+				"value" : ""
+			},
+			"gcalrefreshtoken" : 
+			{
+				"index" : 11,
+				"order" : 111,
+				"text" : "Google Refresh Token",
+				"type" : "textinput",
+				"value" : ""
+			},
+			"kboserver" :
+			{
+				"index" : 1,
+				"order" : 101,
+				"text" : "KBO 서버 주소",
+				"type" : "textinput",
+				"value" : "http://localhost:8080"
+			},
+			"kboteam" : 
+			{
+				"index" : 0,
+				"options" : 
+				[
+					{
+						"label" : "LG 트윈스",
+						"value" : "LG"
+					},
+					{
+						"label" : "두산 베어스",
+						"value" : "DOOSAN"
+					},
+					{
+						"label" : "KT 위즈",
+						"value" : "KT"
+					},
+					{
+						"label" : "SSG 랜더스",
+						"value" : "SSG"
+					},
+					{
+						"label" : "NC 다이노스",
+						"value" : "NC"
+					},
+					{
+						"label" : "삼성 라이온즈",
+						"value" : "SAMSUNG"
+					},
+					{
+						"label" : "롯데 자이언츠",
+						"value" : "LOTTE"
+					},
+					{
+						"label" : "한화 이글스",
+						"value" : "HANWHA"
+					},
+					{
+						"label" : "KIA 타이거즈",
+						"value" : "KIA"
+					},
+					{
+						"label" : "키움 히어로즈",
+						"value" : "HEROES"
+					}
+				],
+				"order" : 100,
+				"text" : "KBO 팀 선택",
+				"type" : "combo",
+				"value" : "DOOSAN"
+			},
+			"league" : 
+			{
+				"index" : 4,
+				"options" : 
+				[
+					{
+						"label" : "KBO",
+						"value" : "kbo"
+					},
+					{
+						"label" : "EPL",
+						"value" : "epl"
+					}
+				],
+				"order" : 104,
+				"text" : "표시할 리그",
+				"type" : "combo",
+				"value" : "kbo"
+			},
+			"schemecolor" : 
+			{
+				"order" : 0,
+				"text" : "ui_browse_properties_scheme_color",
+				"type" : "color",
+				"value" : "0 0 0"
+			},
+			"todolist" :
+			{
+				"index" : 7,
+				"order" : 107,
+				"text" : "할 일 (| 구분, 완료는 앞에 'v '. 예: 장보기 | v 운동)",
+				"type" : "textinput",
+				"value" : ""
+			}
+		}
+	},
+	"title" : "스포츠 달력",
+	"type" : "web",
+	"version" : 1
+}

@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calendar Wallpaper · 02 Layout</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%; height: 100%; overflow: hidden;
+  font-family: 'Libre Franklin', 'Noto Sans KR', sans-serif;
+  background: #e2dbd0;
+}
+
+/* 크기는 fitScale() 이 화면 해상도에 맞춰 px 로 지정한다 */
+#app {
+  position: relative;
+  width: 100%; height: 100%;
+  overflow: hidden;
+}
+
+/* ── 배경 ── */
+/* .bg / #bg-video 는 #app 안에 있으므로 absolute. #app 이 화면 전체 크기다.
+   (fixed 로 두면 아래 fitScale() 의 zoom 과 기준 박스가 어긋난다) */
+.bg {
+  position: absolute; inset: 0; z-index: 0;
+  background: linear-gradient(155deg, #eee8df 0%, #e2dbd0 60%, #d8d0c4 100%);
+}
+.bg::after {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 70% 60% at 15% 85%, rgba(180,160,120,0.10), transparent),
+    radial-gradient(ellipse 50% 40% at 85% 10%, rgba(200,210,220,0.15), transparent);
+}
+
+/* ── 배경 영상 ──
+   .bg 그라데이션(z-index:0)이 불투명하므로 영상은 반드시 그 위(z-index:1)에,
+   UI는 그보다 위(z-index:2)에 있어야 한다. */
+#bg-video { z-index: 1; }
+
+/* ── 전체 레이아웃 ── */
+.layout {
+  position: absolute; inset: 0; z-index: 2;
+  display: grid;
+  grid-template-columns: 250px 1fr 215px;
+  grid-template-rows: 100%;
+  padding: 14px 18px 54px 18px;
+  gap: 12px;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ════════════════════════════
+   A. 좌측 패널
+════════════════════════════ */
+.left-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* A-1. 월/년 + 팀 뱃지 */
+.month-block {
+  flex-shrink: 0;
+}
+.month-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+.month-big {
+  font-size: 63px; font-weight: 700;
+  letter-spacing: -0.05em; line-height: 0.9;
+  color: #1a2a1a;
+}
+.year-small { font-size: 21px; font-weight: 300; color: #7a7060; margin-bottom: 6px; }
+
+/* 팀 뱃지 (KBO/EPL 선택) */
+.team-badge {
+  background: rgba(0,0,0,0.07);
+  border: 1px solid rgba(0,0,0,0.10);
+  border-radius: 8px;
+  padding: 6px 8px;
+  text-align: center;
+  cursor: pointer;
+}
+.team-badge .badge-logo {
+  width: 32px; height: 32px;
+  background: rgba(0,0,0,0.08);
+  border-radius: 50%;
+  margin: 0 auto 3px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13.4px; color: rgba(0,0,0,0.3);
+}
+.team-badge .badge-name {
+  font-size: 15px; font-weight: 600; letter-spacing: 0.06em;
+  text-transform: uppercase; color: #5a5040;
+}
+.team-badge .badge-league {
+  font-size: 13px; color: #9a9080; margin-top: 1px;
+}
+
+/* A-2. 오늘 날짜 강조 박스 */
+.today-box {
+  background: #1e2e1e;
+  border-radius: 10px;
+  padding: 8px 12px;
+  color: #fff;
+  flex-shrink: 0;
+}
+.today-label { font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.5; margin-bottom: 3px; }
+.today-main { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.today-date { font-size: 46px; font-weight: 700; letter-spacing: -0.04em; line-height: 1; }
+.today-time {
+  font-size: 33px; font-weight: 600; letter-spacing: -0.02em; line-height: 1;
+  font-variant-numeric: tabular-nums; opacity: 0.92;
+}
+.today-sec { font-size: 16px; opacity: 0.45; margin-left: 3px; font-weight: 500; }
+.today-day { font-size: 16.5px; opacity: 0.62; margin-top: 4px; }
+
+/* A-3. 오늘 경기 블록 (KBO/EPL) */
+.today-game {
+  cursor: pointer;
+  background: rgba(255,255,255,0.55);
+  border: 1px solid rgba(255,255,255,0.85);
+  border-radius: 8px;
+  padding: 7px 10px;
+  flex-shrink: 0;
+}
+.section-eyebrow {
+  font-size: 13.5px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: #7a8060;
+  margin-bottom: 7px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.eyebrow-sub { font-size: 13px; font-weight: 500; letter-spacing: 0; color: #9a9080; text-transform: none; }
+.league-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  display: inline-block; margin-right: 4px; vertical-align: middle;
+}
+.league-dot.kbo { background: #d04a3a; }
+.league-dot.epl { background: #3a5aaa; }
+
+.game-row {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 18px;
+}
+.game-teams { font-weight: 600; color: #1a2a1a; flex: 1; }
+.game-time { font-size: 16.5px; color: #6a6050; }
+.game-score { font-size: 21px; font-weight: 700; }
+.game-score.win { color: #2a8a4a; }
+.game-score.lose { color: #c04a3a; }
+
+/* A-4. 구글 캘린더 다가오는 일정 */
+.upcoming {
+  background: rgba(255,255,255,0.50);
+  border: 1px solid rgba(255,255,255,0.80);
+  border-radius: 8px;
+  padding: 7px 10px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.gcal-item {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+.gcal-item:last-child { border-bottom: none; }
+.gcal-day {
+  font-size: 18px; font-weight: 700; color: #1a2a1a;
+  width: 24px; flex-shrink: 0; text-align: center;
+}
+.gcal-info { flex: 1; min-width: 0; }
+.gcal-title { font-size: 17px; color: #222; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gcal-time { font-size: 14.5px; color: #7a7060; margin-top: 1px; }
+.gcal-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  margin-top: 3px; flex-shrink: 0;
+}
+.gcal-dot.personal { background: #4a8aaa; }
+.gcal-dot.gcal { background: #4285F4; }
+.gcal-dot.sport { background: #d04a3a; }
+
+/* A-5. TODO */
+.todo-block {
+  background: rgba(255,255,255,0.50);
+  border: 1px solid rgba(255,255,255,0.80);
+  border-radius: 8px;
+  padding: 7px 10px;
+  flex-shrink: 0;
+}
+.todo-row {
+  display: flex; align-items: center; gap: 7px;
+  padding: 3px 0;
+}
+.todo-check {
+  width: 14px; height: 14px; border-radius: 3px;
+  border: 1.5px solid rgba(0,0,0,0.3);
+  flex-shrink: 0;
+}
+.todo-check.done { background: #2a6a4a; border-color: #2a6a4a; }
+.todo-text { font-size: 17px; color: #222; }
+.todo-text.done { opacity: 0.35; text-decoration: line-through; }
+
+/* ════════════════════════════
+   B. 중앙 달력 그리드
+════════════════════════════ */
+.cal-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.cal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 6px;
+  flex-shrink: 0;
+}
+.cal-title {
+  font-size: 18px; font-weight: 600; letter-spacing: 0.08em;
+  text-transform: uppercase; color: #3a3a2a;
+}
+.cal-nav { display: flex; gap: 5px; }
+.cal-nav button {
+  background: rgba(0,0,0,0.07); border: none; border-radius: 6px;
+  width: 26px; height: 26px; cursor: pointer; font-size: 19px; line-height: 1; color: #4a4a3a;
+}
+.cal-nav button:hover { background: rgba(0,0,0,0.14); }
+
+.cal-grid {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.weekdays {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 3px;
+  flex-shrink: 0;
+}
+.weekdays span {
+  text-align: center; font-size: 14px; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: #8a8070; padding-bottom: 4px;
+}
+.weekdays span.s { color: #c04a3a; }
+.weekdays span.sa { color: #3a5a90; }
+
+.days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: 1fr;
+  flex: 1;
+  gap: 2px;
+  min-height: 0;
+}
+.day-cell {
+  background: rgba(255,255,255,0.42);
+  border-radius: 5px;
+  padding: 4px 5px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+.day-cell.empty { background: rgba(255,255,255,0.15); }
+.day-cell.today-cell { background: rgba(30,100,60,0.75); }
+.day-cell.holiday-cell { background: rgba(200,80,60,0.08); }
+
+.day-num {
+  font-size: 19px; font-weight: 600;
+  color: #2a2a1a;
+  line-height: 1;
+}
+.day-cell.today-cell .day-num { color: #fff; }
+/* 오늘 칸은 짙은 초록이라 기본 칩 색이 묻힌다 */
+.day-cell.today-cell .personal-chip { background: rgba(255,255,255,0.22); color: #f2f7f2; }
+.day-cell.today-cell .game-chip.away { background: rgba(255,255,255,0.2); color: #eef5ee; }
+.day-cell.today-cell .holiday-label { color: #ffd2c6; opacity: 1; }
+.day-cell.today-cell .chip-score.win { color: #7ce8a4; }
+.day-cell.today-cell .chip-score.lose { color: #ff9c8c; }
+.day-cell.sun .day-num { color: #c04a3a; }
+.day-cell.sat .day-num { color: #3a5a90; }
+.day-cell.holiday-cell .day-num { color: #c04a3a; }
+.day-cell.dim .day-num { opacity: 0.25; }
+
+/* 달력 칸 안 경기 블록 */
+.game-chip {
+  margin-top: 3px;
+  border-radius: 3px;
+  padding: 2px 5px;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.game-chip.home { background: rgba(255,255,255,0.72); color: #2a2a2a; }
+.game-chip.away { background: rgba(100,150,220,0.2); color: #23346a; }
+.game-chip img { width: 17px; height: 17px; object-fit: contain; flex-shrink: 0; }
+.chip-ha { opacity: 0.55; font-weight: 500; }
+
+/* 달력 칸 안 개인 일정 */
+.personal-chip {
+  margin-top: 2px;
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 13.5px;
+  background: rgba(66,133,244,0.18);
+  color: #17357a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 공휴일 라벨 */
+.holiday-label {
+  font-size: 12.5px; color: #c04a3a; opacity: 0.85;
+  margin-top: 1px;
+}
+
+/* ════════════════════════════
+   C. 우측 사이드바
+════════════════════════════ */
+.right-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* C-1. 이번 달 성적 */
+.record-block {
+  background: rgba(255,255,255,0.52);
+  border: 1px solid rgba(255,255,255,0.82);
+  border-radius: 8px;
+  padding: 7px 10px;
+  flex-shrink: 0;
+}
+.record-nums {
+  display: flex; gap: 10px; margin-top: 6px;
+  justify-content: center;
+}
+.record-item { text-align: center; }
+.record-val { font-size: 36px; font-weight: 700; letter-spacing: -0.03em; color: #1a2a1a; }
+.record-val.w { color: #2a8a4a; }
+.record-val.l { color: #c04a3a; }
+.record-val.d { color: #8a8070; }
+.record-lbl { font-size: 13.5px; letter-spacing: 0.06em; color: #7a7060; }
+
+/* C-2. 다음 경기 카운트다운 */
+.next-game {
+  background: #1e2e1e;
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: #fff;
+  flex-shrink: 0;
+}
+.next-game-title { font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.5; margin-bottom: 4px; }
+.next-game-teams { font-size: 19px; font-weight: 700; margin-bottom: 1px; line-height: 1.25; }
+.next-game-info { font-size: 15px; opacity: 0.62; }
+.countdown {
+  margin-top: 8px;
+  display: flex; gap: 10px; justify-content: center;
+}
+.cd-item { text-align: center; }
+.cd-num { font-size: 27px; font-weight: 700; line-height: 1; }
+.cd-lbl { font-size: 12px; opacity: 0.55; margin-top: 2px; }
+
+/* C-3. 배경 영상 컨트롤 */
+.video-ctrl {
+  background: rgba(255,255,255,0.52);
+  border: 1px solid rgba(255,255,255,0.82);
+  border-radius: 8px;
+  padding: 7px 10px;
+  flex-shrink: 0;
+}
+.ctrl-row {
+  display: flex; align-items: center; gap: 8px;
+  margin-top: 6px;
+}
+.ctrl-btn {
+  width: 30px; height: 30px; border-radius: 7px;
+  background: rgba(0,0,0,0.07);
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; color: #3a3a2a;
+}
+.ctrl-btn:hover { background: rgba(0,0,0,0.14); }
+/* 클릭 가능한 슬라이더: 높이는 3px지만 히트 영역은 위아래 padding으로 넓힌다 */
+.ctrl-slider {
+  flex: 1; cursor: pointer;
+  padding: 7px 0; background-clip: content-box;
+  height: 17px; border-radius: 2px;
+  background: linear-gradient(to right, #3a5a9a 60%, rgba(0,0,0,0.12) 60%);
+}
+.ctrl-team-row {
+  display: flex; gap: 5px; margin-top: 9px;
+}
+.ctrl-team-btn {
+  flex: 1; padding: 6px 0; border-radius: 6px; border: none; cursor: pointer;
+  font-size: 15px; font-weight: 600; letter-spacing: 0.05em;
+}
+.ctrl-team-btn.active { background: #1e2e1e; color: #fff; }
+.ctrl-team-btn.inactive { background: rgba(0,0,0,0.07); color: #5a5040; }
+
+/* C-4. 재생 중인 음악 (Wallpaper Engine 미디어 연동) */
+.music-block {
+  background: #141414;
+  border-radius: 10px;
+  padding: 10px 11px 12px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 9px;
+  overflow: hidden;
+}
+.album-art {
+  width: 100%; aspect-ratio: 1 / 1; max-height: 168px;
+  border-radius: 7px;
+  background: rgba(255,255,255,0.07);
+  flex-shrink: 1; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 46px; color: rgba(255,255,255,0.22);
+}
+.album-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.music-info { min-width: 0; }
+.music-title {
+  font-size: 17px; font-weight: 600; color: #fff; line-height: 1.3;
+  overflow: hidden; text-overflow: ellipsis;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.music-artist {
+  font-size: 15px; color: rgba(255,255,255,0.55);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-top: 3px;
+}
+.progress-bar {
+  width: 100%; height: 3px; border-radius: 2px;
+  background: rgba(255,255,255,0.14);
+}
+.progress-fill {
+  height: 100%; border-radius: 2px;
+  background: rgba(255,255,255,0.85);
+  width: 0%;
+}
+.music-time {
+  display: flex; justify-content: space-between;
+  font-size: 13px; color: rgba(255,255,255,0.42);
+  margin-top: -4px; font-variant-numeric: tabular-nums;
+}
+/* 섹션 제목 옆 구글 바로가기 */
+.open-ext {
+  border: none; background: rgba(0,0,0,0.06); border-radius: 5px;
+  padding: 2px 7px; cursor: pointer;
+  font-size: 12.5px; font-weight: 600; letter-spacing: 0;
+  color: #6a7060; text-transform: none;
+  transition: background .15s, color .15s;
+}
+.open-ext:hover { background: rgba(66,133,244,0.16); color: #2a4a8a; }
+.todo-row, .gcal-item { border-radius: 5px; }
+.todo-row { cursor: pointer; }
+.todo-row:hover { background: rgba(255,255,255,0.45); }
+.todo-check { transition: border-color .15s, background .15s; }
+.todo-check:hover { border-color: #2a6a4a; }
+.todo-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── 마감 다듬기 ── */
+.today-box, .next-game, .music-block { box-shadow: 0 2px 10px rgba(40,35,25,0.13); }
+.today-game, .upcoming, .todo-block, .record-block, .video-ctrl {
+  box-shadow: 0 1px 5px rgba(40,35,25,0.05);
+  backdrop-filter: blur(3px);
+}
+.record-val, .cd-num, .day-num, .chip-score, .game-score, .gcal-day {
+  font-variant-numeric: tabular-nums;
+}
+.ctrl-btn, .cal-nav button, .ctrl-team-btn { transition: background .15s, color .15s; }
+.day-cell { transition: background .15s; }
+.day-cell:not(.empty):hover { background: rgba(255,255,255,0.68); }
+.day-cell.today-cell:hover { background: rgba(30,100,60,0.85); }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div class="bg"></div>
+  <video id="bg-video" autoplay muted loop playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.28;pointer-events:none;"></video>
+
+  <div class="layout">
+
+    <!-- ═══ A. 좌측 패널 ═══ -->
+    <div class="left-panel">
+
+      <!-- A-1. 월/년 + 팀 뱃지 -->
+      <div class="month-block">
+        <div class="month-row">
+          <div>
+            <div class="month-big" id="month-text">6월</div>
+            <div class="year-small" id="year-text">June 2026</div>
+          </div>
+          <!-- 팀 뱃지: WE 속성창에서 KBO/EPL 선택 -->
+          <div class="team-badge" title="WE 속성창에서 팀 선택">
+            <img class="badge-logo" id="team-logo" src="" alt="" style="width:30px;height:30px;object-fit:contain;">
+            <div class="badge-name" id="team-name">두산</div>
+            <div class="badge-league" id="team-league">KBO</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- A-2. 오늘 강조 박스 -->
+      <div class="today-box">
+        <div class="today-label">Today · 오늘</div>
+        <div class="today-main">
+          <div class="today-date" id="today-date">22</div>
+          <div class="today-time" id="today-time">--:--<span class="today-sec" id="today-sec">00</span></div>
+        </div>
+        <div class="today-day" id="today-day">일요일 · Sunday</div>
+      </div>
+
+      <!-- A-3. 오늘 경기 (KBO/EPL API) -->
+      <div class="today-game">
+        <div class="section-eyebrow">
+          <span id="today-game-title"><span class="league-dot kbo"></span>오늘 경기</span>
+        </div>
+        <div id="today-game-content"><div class="no-game">오늘 경기 없음</div></div>
+      </div>
+
+      <!-- A-4. TODO (WE 속성창 입력) -->
+      <div class="todo-block">
+        <div class="section-eyebrow">
+          <span>할 일</span>
+          <button class="open-ext" data-key="tasks" data-url="https://tasks.google.com/" title="구글 Tasks 열기">Tasks ↗</button>
+        </div>
+        <div id="todo-list"></div>
+      </div>
+
+      <!-- A-5. 구글 캘린더 일정 -->
+      <div class="upcoming">
+        <div class="section-eyebrow">
+          <span>다가오는 일정</span>
+          <button class="open-ext" data-key="calendar" data-url="https://calendar.google.com/" title="구글 캘린더 열기">Calendar ↗</button>
+        </div>
+        <div id="gcal-list"></div>
+      </div>
+
+    </div>
+
+    <!-- ═══ B. 중앙 달력 그리드 ═══ -->
+    <div class="cal-panel">
+      <div class="cal-header">
+        <span class="cal-title" id="cal-header-title">June · 2026</span>
+        <div class="cal-nav">
+          <button id="prev-btn">‹</button>
+          <button id="next-btn">›</button>
+        </div>
+      </div>
+      <div class="cal-grid">
+        <div class="weekdays">
+          <span class="s">일 Sun</span>
+          <span>월 Mon</span>
+          <span>화 Tue</span>
+          <span>수 Wed</span>
+          <span>목 Thu</span>
+          <span>금 Fri</span>
+          <span class="sa">토 Sat</span>
+        </div>
+        <div class="days" id="main-cal"></div>
+      </div>
+    </div>
+
+    <!-- ═══ C. 우측 사이드바 ═══ -->
+    <div class="right-panel">
+
+      <!-- C-1. 이번 달 성적 -->
+      <div class="record-block">
+        <div class="section-eyebrow">
+          <span>이번 달 성적</span>
+          <span class="eyebrow-sub" id="record-team">두산</span>
+        </div>
+        <div class="record-nums">
+          <div class="record-item">
+            <div class="record-val w" id="rec-w">-</div>
+            <div class="record-lbl">승</div>
+          </div>
+          <div class="record-item">
+            <div class="record-val l" id="rec-l">-</div>
+            <div class="record-lbl">패</div>
+          </div>
+          <div class="record-item">
+            <div class="record-val d" id="rec-d">-</div>
+            <div class="record-lbl">무</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- C-2. 다음 경기 카운트다운 -->
+      <div class="next-game">
+        <div class="next-game-title">다음 경기</div>
+        <div class="next-game-teams" id="next-teams">-</div>
+        <div class="next-game-info" id="next-info">-</div>
+        <div class="countdown">
+          <div class="cd-item"><div class="cd-num" id="cd-d">-</div><div class="cd-lbl">일</div></div>
+          <div class="cd-item"><div class="cd-num" id="cd-h">-</div><div class="cd-lbl">시</div></div>
+          <div class="cd-item"><div class="cd-num" id="cd-m">-</div><div class="cd-lbl">분</div></div>
+        </div>
+      </div>
+
+      <!-- C-3. 배경 영상 컨트롤 -->
+      <div class="video-ctrl">
+        <div class="section-eyebrow">
+          <span>배경 영상</span>
+        </div>
+        <div class="ctrl-row">
+          <button class="ctrl-btn" id="vid-play" title="재생/일시정지">⏸</button>
+          <div style="flex:1;font-size:13.5px;color:#7a7060;display:flex;justify-content:space-between;">
+            <span>투명도</span><span id="opacity-val">28%</span>
+          </div>
+        </div>
+        <div class="ctrl-slider" id="opacity-bar" title="클릭해서 투명도 조절" style="margin-top:2px;background:linear-gradient(to right,#3a5a9a 28%,rgba(0,0,0,0.12) 28%)"></div>
+        <div class="ctrl-team-row">
+          <button class="ctrl-team-btn active" id="btn-kbo">KBO</button>
+          <button class="ctrl-team-btn inactive" id="btn-epl">EPL</button>
+        </div>
+      </div>
+
+      <!-- C-4. 재생 중인 음악 (Windows 미디어 세션 = Spotify/유튜브/그 무엇이든) -->
+      <div class="music-block">
+        <div class="section-eyebrow" style="color:rgba(255,255,255,0.4);margin-bottom:0;">
+          <span>Now Playing</span>
+          <span id="music-src" class="eyebrow-sub" style="color:rgba(255,255,255,0.3);"></span>
+        </div>
+        <div class="album-art" id="album-art">♪</div>
+        <div class="music-info">
+          <div class="music-title" id="music-title">재생 중인 음악 없음</div>
+          <div class="music-artist" id="music-artist"></div>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <div class="music-time">
+          <span id="music-cur">0:00</span><span id="music-dur">0:00</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── STATE ───────────────────────────────────────
+const state = {
+  now: new Date(),
+  year: new Date().getFullYear(),
+  month: new Date().getMonth(),
+  league: 'kbo',
+  kboTeam: 'DOOSAN',
+  kboServer: 'http://localhost:8080',
+  eplTeam: 'Manchester City',
+  eplApiKey: '',
+  eplTeamId: null,
+  eplTeamCrest: null,
+  eplTeamList: null,
+  gcalToken: '',   // 런타임 전용. refresh token 으로 매번 새로 받는다.
+  gcalRefreshToken: '',
+  gcalClientId: '',
+  gcalClientSecret: '',
+  gcalEvents: [],
+  gcalTasks: [],
+  bgOpacity: 0.28,
+  bgVideo: '',
+  kboGames: {},
+  kboError: '',
+  eplGames: {},
+  todoItems: [],        // WE 속성창에서 넣은 읽기 전용 항목
+  personalEvents: {},   // WE 속성창에서 넣은 읽기 전용 일정
+  notes: {done:[]},     // 바탕화면에서 체크한 완료 표시 (localStorage)
+  gcalError: '',
+  countdownTimer: null,
+};
+
+// ─── 해상도 대응 ─────────────────────────────────
+// 레이아웃이 전부 고정 px라 모니터가 커질수록 글자가 작아 보인다.
+// 1536px 기준으로 디자인하고 실제 폭에 비례해 통째로 확대한다.
+const DESIGN_WIDTH = 1536;
+function fitScale(){
+  // 창 크기가 아직 0으로 보고되는 순간이 있다. 그대로 쓰면 배율이 0이 되어
+  // 화면이 통째로 사라지고 클릭도 안 먹는다.
+  const w = window.innerWidth || DESIGN_WIDTH, hgt = window.innerHeight || 864;
+  const z = w / DESIGN_WIDTH;
+  const app = document.getElementById('app');
+  // zoom 대신 transform: CEF 구버전에서 zoom 은 클릭 좌표가 어긋난다.
+  app.style.transformOrigin = '0 0';
+  app.style.transform = 'scale(' + z + ')';
+  app.style.width = (w / z) + 'px';
+  app.style.height = (hgt / z) + 'px';
+}
+
+// ─── UTILS ───────────────────────────────────────
+const pad = n => String(n).padStart(2,'0');
+const daysInMonth = (y,m) => new Date(y,m+1,0).getDate();
+const firstDay = (y,m) => new Date(y,m,1).getDay();
+const dateStr = (y,m,d) => `${y}-${pad(m+1)}-${pad(d)}`;
+
+const MONTHS_KO = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+const MONTHS_EN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAYS_KO = ['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
+const DAYS_EN = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const HOLIDAYS = {'01-01':'신정','03-01':'삼일절','05-05':'어린이날','06-06':'현충일','08-15':'광복절','10-03':'개천절','10-09':'한글날','12-25':'성탄절'};
+const KBO_TEAMS = [{code:'LG',kw:'LG'},{code:'DOOSAN',kw:'두산'},{code:'KT',kw:'KT'},{code:'SSG',kw:'SSG'},{code:'NC',kw:'NC'},{code:'SAMSUNG',kw:'삼성'},{code:'LOTTE',kw:'롯데'},{code:'HANWHA',kw:'한화'},{code:'KIA',kw:'KIA'},{code:'HEROES',kw:'키움'}];
+const KBO_NAMES = {LG:'LG',DOOSAN:'두산',KT:'KT',SSG:'SSG',NC:'NC',SAMSUNG:'삼성',LOTTE:'롯데',HANWHA:'한화',KIA:'KIA',HEROES:'키움'};
+
+// 바탕화면에서 바로 고치는 할 일/일정은 localStorage 에 남는다.
+// (WE 속성창 항목은 그대로 두고 읽기 전용으로 함께 보여준다)
+const NOTES_KEY='wallpaper-notes-v1';
+function loadNotes(){
+  try{
+    const n=JSON.parse(localStorage.getItem(NOTES_KEY))||{};
+    return {done:Array.isArray(n.done)?n.done:[]};
+  }catch(e){ return {done:[]}; }
+}
+// 할 일 본문은 구글 Tasks / WE 속성창에 있고 여기서 고칠 수 없다.
+// 체크만 바탕화면에서 하므로 완료된 항목의 텍스트만 이 PC 에 남긴다.
+function isDone(t){ return state.notes.done.indexOf(t)>=0; }
+function toggleDone(t){
+  const i=state.notes.done.indexOf(t);
+  if(i<0) state.notes.done.push(t); else state.notes.done.splice(i,1);
+}
+function saveNotes(){ try{ localStorage.setItem(NOTES_KEY,JSON.stringify(state.notes)); }catch(e){} }
+
+// 내가 쓴 글도, 구글에서 받아온 제목도 innerHTML 로 들어간다. 반드시 escape.
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+// 'MM-DD' 를 오늘 이후의 실제 날짜로. (해를 넘기면 내년 같은 날)
+function nextOccurrence(mmdd, from){
+  const [m,d]=String(mmdd).split('-').map(Number);
+  if(!m||!d) return null;
+  let dt=new Date(from.getFullYear(),m-1,d);
+  if(dt<from) dt=new Date(from.getFullYear()+1,m-1,d);
+  return dt;
+}
+
+state.notes = loadNotes();
+
+function codeForName(name){ const t=KBO_TEAMS.find(t=>name&&name.includes(t.kw)); return t?t.code:null; }
+// WE 의 CEF 는 target="_blank" 팝업을 열어주지 않아 페이지 안에서는 외부 링크를 띄울 수 없다.
+// 그래서 로컬 서버(KBO 일정이 뜨는 것으로 이미 검증된 통로)에 대신 열어달라고 한다.
+// 서버가 죽어 있으면 옛 방식이라도 시도해 본다.
+function openExternal(key, url){
+  fetch(`${state.kboServer}/api/open/${key}`)
+    .then(r=>{ if(!r.ok) throw new Error(r.status); })
+    .catch(()=>{
+      const a=document.createElement('a');
+      a.href=url; a.target='_blank'; a.rel='noopener';
+      document.body.appendChild(a); a.click(); a.remove();
+    });
+}
+
+// ─── 헤더 ─────────────────────────────────────
+function renderHeader(){
+  const {year,month,now} = state;
+  document.getElementById('month-text').textContent = MONTHS_KO[month];
+  document.getElementById('year-text').textContent = MONTHS_EN[month]+' '+year;
+  document.getElementById('cal-header-title').textContent = MONTHS_EN[month]+' · '+year;
+  document.getElementById('today-date').textContent = now.getDate();
+  document.getElementById('today-day').textContent = DAYS_KO[now.getDay()]+' · '+DAYS_EN[now.getDay()];
+}
+
+// ─── 팀 배지 ──────────────────────────────────
+function renderTeamBadge(){
+  const img = document.getElementById('team-logo');
+  const nm = document.getElementById('team-name');
+  const lg = document.getElementById('team-league');
+  if(state.league==='kbo'){
+    img.src=`assets/logos/kbo/${state.kboTeam}.png`;
+    img.onerror=()=>{img.style.display='none';};
+    nm.textContent=KBO_NAMES[state.kboTeam]||state.kboTeam;
+    lg.textContent='KBO';
+  } else {
+    img.src=state.eplTeamCrest||'';
+    nm.textContent=state.eplTeam.split(' ').pop();
+    lg.textContent='EPL';
+  }
+}
+
+// ─── KBO API ──────────────────────────────────
+async function fetchKboDay(ds){
+  const res=await fetch(`${state.kboServer}/api/game-schedule/${encodeURIComponent(state.kboTeam)}/${ds}`);
+  if(!res.ok) throw new Error('서버 응답 '+res.status);
+  const json=await res.json();
+  return (json.code==='OK'&&Array.isArray(json.data)&&json.data.length>0) ? json.data : null;
+}
+
+async function loadKboMonth(){
+  const total=daysInMonth(state.year,state.month);
+  const result={};
+  let idx=0, failed=0, firstErr=null;
+  async function worker(){
+    while(idx<total){
+      const d=++idx;
+      const ds=dateStr(state.year,state.month,d);
+      try{
+        const data=await fetchKboDay(ds);
+        if(data) result[ds]=data;
+      }catch(e){ failed++; if(!firstErr) firstErr=e; }
+    }
+  }
+  await Promise.all(Array.from({length:3},worker));
+  state.kboGames=result;
+  // 하루 이틀 실패는 넘어가지만, 전부 실패면 서버가 없는 것이다
+  state.kboError = (failed===total && total>0)
+    ? `KBO 서버 연결 실패 (${state.kboServer})
+${firstErr ? firstErr.message : ''}`
+    : '';
+}
+
+// ─── EPL API ──────────────────────────────────
+async function resolveEplTeamId(){
+  if(!state.eplApiKey) return null;
+  if(state.eplTeamId) return state.eplTeamId;
+  try{
+    if(!state.eplTeamList){
+      const res=await fetch('https://api.football-data.org/v4/competitions/PL/teams',{headers:{'X-Auth-Token':state.eplApiKey}});
+      if(!res.ok){ console.error('EPL teams fetch failed:', res.status); return null; }
+      const json=await res.json();
+      state.eplTeamList=json.teams||[];
+    }
+    const q=state.eplTeam.toLowerCase();
+    const t=state.eplTeamList.find(t=>(t.name||'').toLowerCase().includes(q)||(t.shortName||'').toLowerCase().includes(q));
+    if(!t){ console.error('EPL team not found:', state.eplTeam); return null; }
+    state.eplTeamId=t.id; state.eplTeamCrest=t.crest||null;
+    return t.id;
+  } catch(e){ console.error('EPL resolve error:', e); return null; }
+}
+
+async function loadEplMonth(){
+  const id=await resolveEplTeamId();
+  if(!id){ state.eplGames={}; return; }
+  const from=dateStr(state.year,state.month,1);
+  const to=dateStr(state.year,state.month,daysInMonth(state.year,state.month));
+  try{
+    const res=await fetch(`https://api.football-data.org/v4/teams/${id}/matches?dateFrom=${from}&dateTo=${to}`,{headers:{'X-Auth-Token':state.eplApiKey}});
+    if(!res.ok){ console.error('EPL matches fetch failed:', res.status); return; }
+    const json=await res.json();
+    const result={};
+    (json.matches||[]).forEach(m=>{
+      const ds=new Date(m.utcDate).toLocaleDateString('en-CA',{timeZone:'Asia/Seoul'});
+      if(!result[ds]) result[ds]=[];
+      result[ds].push(m);
+    });
+    state.eplGames=result;
+  } catch(e){}
+}
+
+// ─── 달력 ─────────────────────────────────────
+function renderCalendar(){
+  const {year,month,now,league,kboTeam,eplTeamId}=state;
+  const todayStr=dateStr(now.getFullYear(),now.getMonth(),now.getDate());
+  const total=daysInMonth(year,month);
+  const start=firstDay(year,month);
+  const trailing=(7-(start+total)%7)%7;
+  const games=league==='kbo'?state.kboGames:state.eplGames;
+  const pmap=state.personalEvents;
+  const linkKey=league==='kbo'?'kbo':'epl';
+  const url=league==='kbo'?'https://www.koreabaseball.com/Schedule/Schedule.aspx':'https://www.premierleague.com/fixtures';
+  let html='';
+
+  for(let i=0;i<start;i++) html+='<div class="day-cell empty dim"></div>';
+
+  for(let d=1;d<=total;d++){
+    const ds=dateStr(year,month,d);
+    const col=(start+d-1)%7;
+    const isSun=col===0, isSat=col===6;
+    const isToday=ds===todayStr;
+    const mmdd=`${pad(month+1)}-${pad(d)}`;
+    const isHol=HOLIDAYS[mmdd];
+    const dayGames=games[ds]||[];
+    const personal=pmap[mmdd]||[];
+
+    let cls='day-cell';
+    if(isToday) cls+=' today-cell';
+    else if(isHol) cls+=' holiday-cell';
+    if(isSun) cls+=' sun'; if(isSat) cls+=' sat';
+
+    let inner=`<div class="day-num">${d}</div>`;
+    if(isHol) inner+=`<div class="holiday-label">${isHol}</div>`;
+
+    dayGames.forEach(g=>{
+      inner+= league==='kbo'?buildKboChip(g,kboTeam):buildEplChip(g,eplTeamId);
+    });
+    personal.forEach(ev=>{ inner+=`<div class="personal-chip">${esc(ev)}</div>`; });
+
+    html+=`<div class="${cls}" onclick="openExternal('${linkKey}','${url}')">${inner}</div>`;
+  }
+  for(let i=0;i<trailing;i++) html+='<div class="day-cell empty dim"></div>';
+
+  document.getElementById('main-cal').innerHTML=html;
+}
+
+// 달력 칸은 좁다. 상대 팀 이름을 넣으면 점수/시각이 잘려서 안 보이므로
+// [상대 로고][홈/원정][점수 또는 시각] 만 넣는다. 이름은 로고가 대신한다.
+function chipHtml(isHome, logoHtml, right, resultCls, title){
+  return `<div class="game-chip ${isHome?'home':'away'}" title="${title}">${logoHtml}`
+       + `<span class="chip-ha">${isHome?'vs':'@'}</span>`
+       + `<span class="chip-score ${resultCls}">${right}</span></div>`;
+}
+
+function buildKboChip(g, myTeam){
+  const isHome=codeForName(g.homeTeam)===myTeam;
+  const opp=codeForName(isHome?g.awayTeam:g.homeTeam)||'?';
+  const fin=g.gameStatus&&g.gameStatus.includes('종료');
+  const logo=`<img src="assets/logos/kbo/${opp}.png" onerror="this.style.display='none'">`;
+  const title=`${isHome?'vs':'@'} ${KBO_NAMES[opp]||opp}`;
+  if(fin){
+    const my=Number(isHome?g.homeScore:g.awayScore), op=Number(isHome?g.awayScore:g.homeScore);
+    return chipHtml(isHome, logo, `${g.awayScore}:${g.homeScore}`, my>op?'win':my<op?'lose':'', title);
+  }
+  return chipHtml(isHome, logo, (g.time||'').slice(0,5), '', title);
+}
+
+function buildEplChip(m, myId){
+  const isHome=m.homeTeam&&m.homeTeam.id===myId;
+  const opp=isHome?m.awayTeam:m.homeTeam;
+  const crest=opp&&opp.crest||'';
+  const logo=crest?`<img src="${crest}" onerror="this.style.display='none'">`:'';
+  const title=`${isHome?'vs':'@'} ${opp&&(opp.shortName||opp.name)||''}`;
+  if(m.status==='FINISHED'&&m.score&&m.score.fullTime){
+    const {home,away}=m.score.fullTime;
+    const my=isHome?home:away, op=isHome?away:home;
+    return chipHtml(isHome, logo, `${home}:${away}`, my>op?'win':my<op?'lose':'', title);
+  }
+  const t=new Date(m.utcDate).toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit'});
+  return chipHtml(isHome, logo, t, '', title);
+}
+
+// ─── 오늘 경기 패널 ────────────────────────────
+function renderTodayGame(){
+  const ds=dateStr(state.now.getFullYear(),state.now.getMonth(),state.now.getDate());
+  const games=(state.league==='kbo'?state.kboGames:state.eplGames)[ds]||[];
+  const el=document.getElementById('today-game-content');
+  if(!games.length){
+    const msg = (state.league==='kbo' && state.kboError) ? state.kboError : '오늘 경기 없음';
+    el.innerHTML=`<div class="no-game">${esc(msg)}</div>`;
+    return;
+  }
+  el.innerHTML=games.map(g=>{
+    if(state.league==='kbo'){
+      const isHome=codeForName(g.homeTeam)===state.kboTeam;
+      const opp=isHome?g.awayTeam:g.homeTeam;
+      const fin=g.gameStatus&&g.gameStatus.includes('종료');
+      if(fin){
+        const my=Number(isHome?g.homeScore:g.awayScore), op=Number(isHome?g.awayScore:g.homeScore);
+        const c=my>op?'win':my<op?'lose':'';
+        return `<div class="game-row"><span class="game-teams">${isHome?'vs':'@'} ${opp}</span><span class="game-score ${c}">${g.awayScore}:${g.homeScore}</span></div>`;
+      }
+      return `<div class="game-row"><span class="game-teams">${isHome?'vs':'@'} ${opp}</span><span class="game-time">${(g.time||'').slice(0,5)}</span></div>`;
+    } else {
+      const isHome=g.homeTeam&&g.homeTeam.id===state.eplTeamId;
+      const opp=isHome?g.awayTeam:g.homeTeam;
+      const oppN=opp&&(opp.shortName||opp.name)||'';
+      const fin=g.status==='FINISHED';
+      if(fin&&g.score&&g.score.fullTime){
+        const {home,away}=g.score.fullTime;
+        const my=isHome?home:away, op=isHome?away:home;
+        const c=my>op?'win':my<op?'lose':'';
+        return `<div class="game-row"><span class="game-teams">${isHome?'vs':'@'} ${oppN}</span><span class="game-score ${c}">${home}:${away}</span></div>`;
+      }
+      const t=new Date(g.utcDate).toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit'});
+      return `<div class="game-row"><span class="game-teams">${isHome?'vs':'@'} ${oppN}</span><span class="game-time">${t}</span></div>`;
+    }
+  }).join('');
+}
+
+// ─── 성적 + 다음경기 카운트다운 ──────────────
+function renderRecord(){
+  const games=state.league==='kbo'?state.kboGames:state.eplGames;
+  let w=0,l=0,d=0,nextGame=null;
+  let minDiff=Infinity;
+  const currentTime=new Date();
+
+  Object.entries(games).forEach(([ds,list])=>{
+    list.forEach(g=>{
+      if(state.league==='kbo'){
+        const isHome=codeForName(g.homeTeam)===state.kboTeam;
+        const fin=g.gameStatus&&g.gameStatus.includes('종료');
+        // 성적 집계
+        if(fin){
+          const my=Number(isHome?g.homeScore:g.awayScore),op=Number(isHome?g.awayScore:g.homeScore);
+          if(my>op)w++;else if(my<op)l++;else d++;
+        }
+        // 예정 경기 탐색 (종료되지 않은 경기 중 가장 가까운 미래)
+        if(!fin){
+          const [y,mo,da]=ds.split('-').map(Number);
+          const [hh,mm]=(g.time||'18:30').split(':').map(Number);
+          const gameTime=new Date(y,mo-1,da,hh,mm,0);
+          const diff=gameTime-currentTime;
+          if(diff>0&&diff<minDiff){minDiff=diff;nextGame={ds,game:g,isHome,gameTime};}
+        }
+      } else {
+        const isHome=g.homeTeam&&g.homeTeam.id===state.eplTeamId;
+        const fin=g.status==='FINISHED';
+        if(fin&&g.score&&g.score.fullTime){
+          const my=isHome?g.score.fullTime.home:g.score.fullTime.away,op=isHome?g.score.fullTime.away:g.score.fullTime.home;
+          if(my>op)w++;else if(my<op)l++;else d++;
+        }
+        if(!fin&&g.status!=='POSTPONED'&&g.status!=='CANCELLED'){
+          const gameTime=new Date(g.utcDate);
+          const diff=gameTime-currentTime;
+          if(diff>0&&diff<minDiff){minDiff=diff;nextGame={ds,game:g,isHome,gameTime};}
+        }
+      }
+    });
+  });
+
+  document.getElementById('rec-w').textContent=w;
+  document.getElementById('rec-l').textContent=l;
+  document.getElementById('rec-d').textContent=d;
+  document.getElementById('record-team').textContent=state.league==='kbo'?(KBO_NAMES[state.kboTeam]||state.kboTeam):state.eplTeam;
+
+  if(nextGame){
+    const {ds,game,isHome,gameTime}=nextGame;
+    const [,m,d2]=ds.split('-').map(Number);
+    if(state.league==='kbo'){
+      document.getElementById('next-teams').textContent=`${KBO_NAMES[state.kboTeam]} vs ${isHome?game.awayTeam:game.homeTeam}`;
+      document.getElementById('next-info').textContent=`${m}/${d2} · ${(game.time||'').slice(0,5)}`;
+      startCountdown(gameTime);
+    } else {
+      const opp=isHome?game.awayTeam:game.homeTeam;
+      document.getElementById('next-teams').textContent=`${state.eplTeam} vs ${opp&&(opp.shortName||opp.name)||''}`;
+      const t=gameTime.toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit'});
+      document.getElementById('next-info').textContent=`${m}/${d2} · ${t}`;
+      startCountdown(gameTime);
+    }
+  } else {
+    document.getElementById('next-teams').textContent='예정 경기 없음';
+    document.getElementById('next-info').textContent='';
+    if(state.countdownTimer) clearInterval(state.countdownTimer);
+    document.getElementById('cd-d').textContent='-';
+    document.getElementById('cd-h').textContent='-';
+    document.getElementById('cd-m').textContent='-';
+  }
+}
+
+function startCountdown(target){
+  if(state.countdownTimer) clearInterval(state.countdownTimer);
+  function tick(){
+    const diff=target-new Date();
+    if(diff<=0){document.getElementById('cd-d').textContent='0';document.getElementById('cd-h').textContent='00';document.getElementById('cd-m').textContent='00';clearInterval(state.countdownTimer);return;}
+    document.getElementById('cd-d').textContent=Math.floor(diff/86400000);
+    document.getElementById('cd-h').textContent=pad(Math.floor((diff%86400000)/3600000));
+    document.getElementById('cd-m').textContent=pad(Math.floor((diff%3600000)/60000));
+  }
+  tick(); state.countdownTimer=setInterval(tick,30000);
+}
+
+// ─── TODO ─────────────────────────────────────
+function renderTodo(){
+  const el=document.getElementById('todo-list');
+  if(!el) return;
+  // 본문은 구글 Tasks / WE 속성창에서 온다. 바탕화면에서는 체크만 한다.
+  const rows=[]
+    .concat(state.gcalTasks.map(t=>({text:t.title||'', done:isDone(t.title||'')})))
+    .concat(state.todoItems.map(t=>({text:t.text, done:t.done||isDone(t.text)})))
+    .filter(r=>r.text);
+
+  if(!rows.length){ el.innerHTML='<div class="no-game">할 일 없음<br>Tasks ↗ 로 추가</div>'; return; }
+  el.innerHTML=rows.map(r=>
+    `<div class="todo-row" data-text="${esc(r.text)}">`
+    +`<div class="todo-check ${r.done?'done':''}"></div>`
+    +`<span class="todo-text ${r.done?'done':''}">${esc(r.text)}</span>`
+    +`</div>`).join('');
+}
+
+// ─── Google 토큰 자동 갱신 ──────────────────────
+// access token 은 1시간이면 죽는다. 속성창에 직접 넣는 대신
+// refresh token 으로 항상 새로 받아온다 (부팅 직후 포함).
+function gcalStatus(msg){ state.gcalError=msg; renderGcal(); }
+
+async function refreshGcalToken(){
+  if(!state.gcalRefreshToken || !state.gcalClientId || !state.gcalClientSecret){
+    gcalStatus('Google 속성 3개(Client ID / Secret / Refresh Token) 입력 필요');
+    return;
+  }
+  try{
+    const res = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `grant_type=refresh_token&refresh_token=${encodeURIComponent(state.gcalRefreshToken)}&client_id=${encodeURIComponent(state.gcalClientId)}&client_secret=${encodeURIComponent(state.gcalClientSecret)}`
+    });
+    const json = await res.json().catch(()=>({}));
+    if(!res.ok || !json.access_token){
+      gcalStatus('Google 인증 실패: '+(json.error_description||json.error||res.status));
+      return;
+    }
+    state.gcalToken = json.access_token;
+    state.gcalError = '';
+    fetchGcal();
+    fetchTasks();
+  } catch(e){ gcalStatus('Google 연결 실패'); }
+}
+
+// ─── Google Calendar ──────────────────────────
+async function fetchGcal(){
+  if(!state.gcalToken) return;
+  const now = new Date().toISOString();
+  const future = new Date(Date.now() + 30*24*60*60*1000).toISOString();
+  try{
+    const res = await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${now}&timeMax=${future}&maxResults=10&singleEvents=true&orderBy=startTime`,
+      { headers: { 'Authorization': 'Bearer ' + state.gcalToken } }
+    );
+    if(res.status === 401){ refreshGcalToken(); return; }
+    if(!res.ok) return;
+    const json = await res.json();
+    state.gcalEvents = json.items || [];
+    renderGcal();
+  } catch(e){}
+}
+
+// ─── Google Tasks ─────────────────────────────
+async function fetchTasks(){
+  if(!state.gcalToken) return;
+  try{
+    const res = await fetch(
+      'https://tasks.googleapis.com/tasks/v1/lists/@default/tasks?showCompleted=false&maxResults=10',
+      { headers: { 'Authorization': 'Bearer ' + state.gcalToken } }
+    );
+    if(res.status === 401){ refreshGcalToken(); return; }
+    if(!res.ok) return;
+    const json = await res.json();
+    state.gcalTasks = json.items || [];
+    renderTodo();
+  } catch(e){}
+}
+
+function renderGcal(){
+  const el = document.getElementById('gcal-list');
+  if(!el) return;
+  const today=new Date(state.now.getFullYear(),state.now.getMonth(),state.now.getDate());
+  const items=[];
+
+  // WE 속성창 일정
+  Object.entries(state.personalEvents).forEach(([mmdd,list])=>list.forEach(t=>{
+    const when=nextOccurrence(mmdd,today);
+    if(when) items.push({when,title:t,time:'',dot:'personal'});
+  }));
+  // 구글 캘린더 (읽기 전용)
+  (state.gcalEvents||[]).forEach(ev=>{
+    const d=new Date(ev.start.dateTime||ev.start.date);
+    items.push({when:d,title:ev.summary||'(제목없음)',dot:'gcal',
+      time: ev.start.dateTime ? d.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}) : '종일'});
+  });
+
+  if(!items.length){
+    el.innerHTML=`<div class="no-game">${esc(state.gcalError||'일정 없음')}${state.gcalError?'':'<br>Calendar ↗ 로 추가'}</div>`;
+    return;
+  }
+  items.sort((a,b)=>a.when-b.when);
+  el.innerHTML=items.slice(0,5).map(it=>
+    `<div class="gcal-item">`
+    +`<div class="gcal-day">${it.when.getDate()}</div>`
+    +`<div class="gcal-info"><div class="gcal-title">${esc(it.title)}</div>`
+    +(it.time?`<div class="gcal-time">${esc(it.time)}</div>`:'')+`</div>`
+    +`<div class="gcal-dot ${it.dot}"></div>`
+    +`</div>`).join('');
+}
+
+// ─── 배경 영상 ────────────────────────────────
+function defaultBgSrc(){
+  return state.league==='kbo' ? `assets/bg/${state.kboTeam.toLowerCase()}.webm` : '';
+}
+function setBgSrc(v,src){
+  v.dataset.src=src;
+  if(src){ v.src=src; v.load(); v.play().catch(()=>{}); }
+  else { v.removeAttribute('src'); v.load(); }
+}
+function updateBgVideo(){
+  const v=document.getElementById('bg-video');
+  // 속성창 경로 > 팀 기본 영상. 둘 다 없으면 배경 그라데이션만 보인다.
+  const src=state.bgVideo||defaultBgSrc();
+  if(v.dataset.src!==src) setBgSrc(v,src);
+  v.style.opacity=state.bgOpacity;
+  document.getElementById('opacity-val').textContent=Math.round(state.bgOpacity*100)+'%';
+  document.getElementById('opacity-bar').style.background=`linear-gradient(to right,#3a5a9a ${state.bgOpacity*100}%,rgba(0,0,0,0.12) ${state.bgOpacity*100}%)`;
+}
+
+// ─── 재생 중인 음악 ────────────────────────────
+// Wallpaper Engine 이 Windows 미디어 세션을 그대로 넘겨준다.
+// Spotify / 유튜브 / 브라우저 / 로컬 플레이어 전부 동작하고 토큰이 필요 없다.
+// (WE 설정 → 일반 → "미디어 통합" 이 켜져 있어야 한다)
+const media = { playing:false, pos:0, dur:0, posAt:Date.now() };
+const $ = id => document.getElementById(id);
+const fmtSec = s => { s=Math.max(0,Math.floor(s||0)); return `${Math.floor(s/60)}:${pad(s%60)}`; };
+
+function renderMusicTime(){
+  if(!media.dur){ $('progress-fill').style.width='0%'; $('music-cur').textContent='0:00'; $('music-dur').textContent='0:00'; return; }
+  // 타임라인 이벤트는 드물게 오므로 마지막 값에 경과 시간을 더해 보간한다
+  const pos = Math.min(media.dur, media.playing ? media.pos+(Date.now()-media.posAt)/1000 : media.pos);
+  $('progress-fill').style.width = (pos/media.dur*100)+'%';
+  $('music-cur').textContent = fmtSec(pos);
+  $('music-dur').textContent = fmtSec(media.dur);
+}
+
+window.wallpaperRegisterMediaPropertiesListener?.(e => {
+  $('music-title').textContent = e.title || '재생 중인 음악 없음';
+  $('music-artist').textContent = [e.artist, e.albumTitle].filter(Boolean).join(' · ');
+});
+
+window.wallpaperRegisterMediaThumbnailListener?.(e => {
+  $('album-art').innerHTML = e.imageData ? `<img src="${e.imageData}" alt="">` : '♪';
+});
+
+window.wallpaperRegisterMediaPlaybackListener?.(e => {
+  // 일시정지 시점까지 흐른 만큼을 pos에 확정시켜야 보간이 어긋나지 않는다
+  if(media.playing) media.pos += (Date.now()-media.posAt)/1000;
+  media.playing = e.state === (window.wallpaperMediaIntegration?.PLAYBACK_PLAYING ?? 1);
+  media.posAt = Date.now();
+  renderMusicTime();
+});
+
+window.wallpaperRegisterMediaTimelineListener?.(e => {
+  media.pos = e.position ?? e.positionSeconds ?? 0;
+  media.dur = e.duration ?? e.durationSeconds ?? 0;
+  media.posAt = Date.now();
+  renderMusicTime();
+});
+
+window.wallpaperRegisterMediaStatusListener?.(e => {
+  $('music-src').textContent = e.enabled ? '' : 'WE 설정에서 미디어 통합 켜기';
+  if(!e.enabled || e.available === false){
+    $('music-title').textContent='재생 중인 음악 없음';
+    $('music-artist').textContent=''; $('album-art').innerHTML='♪';
+    media.playing=false; media.pos=0; media.dur=0; renderMusicTime();
+  }
+});
+
+// ─── WE 속성 파서 ─────────────────────────────
+function parseTodo(str){
+  if(!str) return [];
+  const re=/^v\s+/i;   // 'v 운동' → 완료 처리
+  return str.split('|').map(s=>s.trim()).filter(Boolean).map(s=>re.test(s)?{text:s.replace(re,''),done:true}:{text:s,done:false});
+}
+function parseEvents(str){
+  const map={};
+  if(!str) return map;
+  str.split('|').forEach(seg=>{
+    const i=seg.indexOf(':');if(i===-1) return;
+    const k=seg.slice(0,i).trim(), v=seg.slice(i+1).trim();
+    if(!map[k]) map[k]=[];map[k].push(v);
+  });
+  return map;
+}
+
+// ─── 전체 갱신 ────────────────────────────────
+async function refreshAll(){
+  await Promise.all([loadKboMonth(),loadEplMonth()]);
+  renderAll();
+}
+function renderAll(){
+  renderHeader(); renderTeamBadge(); renderCalendar();
+  renderTodayGame(); renderRecord(); renderTodo(); renderGcal(); updateBgVideo();
+}
+function changeMonth(delta){
+  state.month+=delta;
+  if(state.month<0){state.month=11;state.year--;}
+  if(state.month>11){state.month=0;state.year++;}
+  state.kboGames={}; state.eplGames={};
+  renderAll(); refreshAll();
+}
+
+// ─── 이벤트 바인딩 ────────────────────────────
+// '오늘 경기' 칸을 누르면 즉시 다시 불러온다 (서버가 늦게 떴을 때 수동 재시도)
+document.querySelector('.today-game')?.addEventListener('click',()=>{
+  const el=document.getElementById('today-game-content');
+  el.innerHTML='<div class="no-game">불러오는 중…</div>';
+  refreshAll();
+});
+
+document.getElementById('prev-btn')?.addEventListener('click',()=>changeMonth(-1));
+document.getElementById('next-btn')?.addEventListener('click',()=>changeMonth(1));
+
+const bgVid=document.getElementById('bg-video');
+// 내가 직접 멈춘 것인지 기억한다. 아래 canplay 재시도가 이걸 덮어쓰면 안 된다.
+let userPausedVideo=false;
+document.getElementById('vid-play')?.addEventListener('click',()=>{
+  if(bgVid.paused||bgVid.ended){ userPausedVideo=false; bgVid.play().catch(()=>{}); }
+  else { userPausedVideo=true; bgVid.pause(); }
+});
+// 버튼 표시는 항상 실제 재생 상태를 따라간다 (autoplay 실패해도 어긋나지 않음)
+const syncPlayBtn=()=>{document.getElementById('vid-play').textContent=bgVid.paused?'▶':'⏸';};
+bgVid.addEventListener('play',syncPlayBtn);
+bgVid.addEventListener('pause',syncPlayBtn);
+
+// 속성창 경로가 실제 파일과 다를 때(예: .mp4 라고 적었는데 파일은 .webm)
+// 조용히 검은 화면이 되지 않도록 팀 기본 영상으로 되돌린다.
+// src 를 갈아끼운 직후엔 아직 재생 준비가 안 돼 play() 가 무시될 수 있다
+// WE 가 월페이퍼를 멈춰둔 동안에는 되살리면 안 된다 (일시정지의 의미가 없어진다)
+let wePaused=false;
+function resumeVideo(){
+  if(userPausedVideo || wePaused || !bgVid.dataset.src) return;
+  if(bgVid.paused || bgVid.ended) bgVid.play().catch(()=>{});
+}
+bgVid.addEventListener('canplay',resumeVideo);
+// WE 가 월페이퍼를 멈췄다 풀면 문서는 다시 보이는데 영상은 멈춘 채로 남는다
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden) resumeVideo(); });
+
+// 기본 영상 자체가 실패하면 몇 번만 다시 시도하고 포기한다 (무한 재로드 방지)
+let videoErrRetries=0;
+bgVid.addEventListener('error',()=>{
+  const fb=defaultBgSrc();
+  if(fb && bgVid.dataset.src!==fb){ videoErrRetries=0; setBgSrc(bgVid,fb); }
+  else if(bgVid.dataset.src && ++videoErrRetries<=3){
+    const src=bgVid.dataset.src;
+    setTimeout(()=>setBgSrc(bgVid,src), 3000);
+  }
+});
+
+// 감시자 — 멈추는 원인(WE 일시정지 복귀, 디코딩 중단, 브라우저 정책)을 하나씩
+// 쫓는 대신, 재생 중이어야 하는데 프레임이 안 나가면 되살린다.
+let lastVideoTime=-1, videoStalls=0;
+setInterval(()=>{
+  if(userPausedVideo || wePaused || !bgVid.dataset.src) return;
+  if(bgVid.paused || bgVid.ended){ resumeVideo(); videoStalls=0; lastVideoTime=-1; return; }
+  if(bgVid.currentTime===lastVideoTime){
+    // 15초 동안 한 프레임도 안 나갔으면 통째로 다시 로드한다
+    if(++videoStalls>=3){ videoStalls=0; videoErrRetries=0; setBgSrc(bgVid,bgVid.dataset.src); }
+  } else videoStalls=0;
+  lastVideoTime=bgVid.currentTime;
+}, 5000);
+
+// 투명도 바 클릭 → 그 위치 비율로 설정
+document.getElementById('opacity-bar')?.addEventListener('click',e=>{
+  const r=e.currentTarget.getBoundingClientRect();
+  state.bgOpacity=Math.min(1,Math.max(0,(e.clientX-r.left)/r.width));
+  updateBgVideo();
+});
+document.getElementById('btn-kbo')?.addEventListener('click',()=>{
+  state.league='kbo';
+  document.getElementById('btn-kbo').className='ctrl-team-btn active';
+  document.getElementById('btn-epl').className='ctrl-team-btn inactive';
+  renderAll();
+});
+document.getElementById('btn-epl')?.addEventListener('click',()=>{
+  state.league='epl';
+  document.getElementById('btn-kbo').className='ctrl-team-btn inactive';
+  document.getElementById('btn-epl').className='ctrl-team-btn active';
+  renderAll();
+});
+// ─── 할 일 체크 ────────────────────────────────
+// 본문은 구글 Tasks / WE 속성창에 있어 여기서 고칠 수 없다. 완료 표시만 켜고 끈다.
+document.getElementById('todo-list')?.addEventListener('click',e=>{
+  const row=e.target.closest('.todo-row'); if(!row) return;
+  toggleDone(row.dataset.text);
+  saveNotes(); renderTodo();
+});
+
+// ─── 구글 바로가기 ─────────────────────────────
+document.querySelectorAll('.open-ext').forEach(b=>{
+  b.addEventListener('click',e=>{ e.stopPropagation(); openExternal(b.dataset.key, b.dataset.url); });
+});
+
+// 빈 곳을 두 번 누르면 화면을 숨긴다. 버튼/항목 위에서는 무시한다.
+document.addEventListener('dblclick',e=>{
+  if(e.target.closest('button, .todo-row, .gcal-item')) return;
+  document.getElementById('app').classList.toggle('hidden');
+});
+
+// ─── WE 속성창 ────────────────────────────────
+window.wallpaperPropertyListener = {
+  // WE 설정의 "다른 프로그램 실행 중 일시 정지" 등으로 월페이퍼가 멈췄다 풀릴 때 호출된다.
+  // 구현하지 않으면 재개된 뒤에도 배경 영상이 멈춘 채로 남는다.
+  setPaused(isPaused){
+    wePaused = !!isPaused;
+    if(wePaused) bgVid.pause(); else resumeVideo();
+  },
+  applyUserProperties(props){
+    let needRefresh=false, needGcal=false;
+    if(props.kboteam&&props.kboteam.value){state.kboTeam=props.kboteam.value;needRefresh=true;}
+    if(props.kboserver){state.kboServer=(props.kboserver.value||'').trim()||'http://localhost:8080';needRefresh=true;}
+    if(props.eplteam){state.eplTeam=props.eplteam.value;state.eplTeamId=null;state.eplTeamList=null;needRefresh=true;}
+    if(props.eplapikey){state.eplApiKey=props.eplapikey.value;state.eplTeamId=null;state.eplTeamList=null;needRefresh=true;}
+    if(props.league){state.league=props.league.value;}
+    if(props.bgvideo){state.bgVideo=props.bgvideo.value;updateBgVideo();}
+    if(props.bgopacity){state.bgOpacity=parseFloat(props.bgopacity.value)||0.28;updateBgVideo();}
+    if(props.todolist){state.todoItems=parseTodo(props.todolist.value);}
+    if(props.eventlist){state.personalEvents=parseEvents(props.eventlist.value);}
+    if(props.gcalrefreshtoken){state.gcalRefreshToken=props.gcalrefreshtoken.value;needGcal=true;}
+    if(props.gcalclientid){state.gcalClientId=props.gcalclientid.value;needGcal=true;}
+    if(props.gcalclientsecret){state.gcalClientSecret=props.gcalclientsecret.value;needGcal=true;}
+    if(needRefresh) refreshAll(); else renderAll();
+    if(needGcal) refreshGcalToken();
+  }
+};
+
+// ─── 현재 시각 ────────────────────────────────
+function renderClock(){
+  const d=new Date();
+  const rolled = d.getDate()!==state.now.getDate();
+  state.now=d;
+  document.getElementById('today-time').innerHTML =
+    `${pad(d.getHours())}:${pad(d.getMinutes())}<span class="today-sec">${pad(d.getSeconds())}</span>`;
+  if(rolled) renderAll();   // 자정을 넘기면 날짜/달력을 다시 그린다
+}
+
+// ─── 시작 ─────────────────────────────────────
+document.addEventListener('DOMContentLoaded',()=>{
+  fitScale();
+  window.addEventListener('resize',fitScale);
+  renderAll();
+  refreshAll();
+  setInterval(refreshAll, 3600000);
+  // 로그인 직후엔 월페이퍼가 KBO 서버(부팅 ~30초)보다 먼저 뜬다.
+  // 데이터가 들어올 때까지 20초마다, 최대 5분간 다시 시도한다.
+  let tries=0;
+  const bootRetry=setInterval(()=>{
+    if(Object.keys(state.kboGames).length>0 || ++tries>15){ clearInterval(bootRetry); return; }
+    refreshAll();
+  }, 20000);
+  renderClock();
+  setInterval(renderClock, 1000);
+  renderMusicTime();
+  setInterval(renderMusicTime, 1000);
+  refreshGcalToken();                        // 부팅 직후 바로 토큰 발급
+  setInterval(fetchGcal, 600000);
+  setInterval(fetchTasks, 600000);
+  setInterval(refreshGcalToken, 50*60*1000); // 50분마다 토큰 자동 갱신
+  setInterval(()=>{state.now=new Date();renderHeader();},60000);
+});
+</script>
+
+<style>
+#app { transition: opacity 0.4s; }
+#app.hidden { opacity: 0; pointer-events: none; }
+
+/* 위 블록에 없는 동적 DOM 전용 스타일만 둔다 (중복은 위 블록을 덮어써서 헷갈린다) */
+.no-game { font-size: 16px; color: #9a9080; padding: 3px 0; line-height: 1.4; white-space: pre-line; }
+.game-row { margin-bottom: 3px; }
+.chip-score { font-size: 15.5px; margin-left: auto; }
+.chip-score.win { color: #1e7a3e; font-weight: 800; }
+.chip-score.lose { color: #b33f30; font-weight: 800; }
+.gcal-dot { background: #4285F4; }
+</style>
+</body>
+</html>
