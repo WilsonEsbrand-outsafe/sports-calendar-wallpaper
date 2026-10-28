@@ -1,3 +1,4 @@
 ﻿# 구글 토큰 등 개인 값이 들어 있음. project.example.json 을 복사해서 쓴다.
 project.json
 graphify-out/
+tools/jamsil/jamsil.svg

@@ -125,7 +125,14 @@ Windows 는 바탕화면 배경 창에 **키보드 포커스를 주지 않는다
 | `gocheok.jpg` | 키움 (고척) |
 | `default.jpg` | EPL 모드, 또는 팀 사진이 없을 때 |
 
-사진은 저장소에 없다(저작권). 직접 찍었거나 사용 허락된 사진을 넣을 것. 화면 비율(16:9)에 맞춰 가운데 기준으로 잘려 꽉 차게 보인다.
+`jamsil.jpg` 는 노을 진 잠실구장 일러스트(2560×1440)가 기본으로 들어 있다. `tools/jamsil/make_svg.py` 로 그린 것이라 색이나 구도를 바꾸고 싶으면 그 파일을 고친 뒤 다시 만든다:
+
+```
+python3 tools/jamsil/make_svg.py > tools/jamsil/jamsil.svg
+node tools/jamsil/render.js        # Playwright 필요 → assets/stadium/jamsil.jpg
+```
+
+나머지 구장은 직접 사진을 넣을 것. 같은 이름으로 덮어쓰면 일러스트 대신 그 사진이 나온다. 화면 비율(16:9)에 맞춰 가운데 기준으로 잘려 꽉 차게 보인다.
 
 속성창의 "배경 사진 경로"에 직접 적으면 팀과 무관하게 그 파일을 쓴다.
 속성창 경로 → 팀 홈구장 → `default.jpg` 순서로 열리는 첫 사진을 쓰고, 하나도 없으면 예전의 베이지색 배경이 나온다.
