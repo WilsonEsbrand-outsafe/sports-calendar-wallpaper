@@ -24,7 +24,7 @@ html, body {
 }
 
 /* ── 배경 ── */
-/* .bg / #bg-video 는 #app 안에 있으므로 absolute. #app 이 화면 전체 크기다.
+/* .bg / .bg-photo 는 #app 안에 있으므로 absolute. #app 이 화면 전체 크기다.
    (fixed 로 두면 아래 fitScale() 의 zoom 과 기준 박스가 어긋난다) */
 .bg {
   position: absolute; inset: 0; z-index: 0;
@@ -38,10 +38,23 @@ html, body {
     radial-gradient(ellipse 50% 40% at 85% 10%, rgba(200,210,220,0.15), transparent);
 }
 
-/* ── 배경 영상 ──
-   .bg 그라데이션(z-index:0)이 불투명하므로 영상은 반드시 그 위(z-index:1)에,
-   UI는 그보다 위(z-index:2)에 있어야 한다. */
-#bg-video { z-index: 1; }
+/* ── 경기장 사진 ──
+   응원 팀 홈구장 전경이 기본 화면이다. 그라데이션(z-index:0) 위에 깔고,
+   사진 파일이 없으면 투명하게 두어 그라데이션이 그대로 보이게 한다. */
+.bg-photo {
+  position: absolute; inset: 0; z-index: 1;
+  background: center / cover no-repeat;
+  opacity: 0; transition: opacity 0.6s;
+}
+.bg-photo.loaded { opacity: 1; }
+/* 달력을 켰을 때만 사진을 살짝 가려 글자가 읽히게 한다 */
+.bg-photo::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: rgba(238,232,223,0.55);
+  opacity: 0; transition: opacity 0.4s;
+}
+#app.calendar-on .bg-photo::after { opacity: 1; }
 
 /* ── 전체 레이아웃 ── */
 .layout {
@@ -379,35 +392,16 @@ html, body {
 .cd-num { font-size: 27px; font-weight: 700; line-height: 1; }
 .cd-lbl { font-size: 12px; opacity: 0.55; margin-top: 2px; }
 
-/* C-3. 배경 영상 컨트롤 */
-.video-ctrl {
+/* C-3. 리그 전환 */
+.league-ctrl {
   background: rgba(255,255,255,0.52);
   border: 1px solid rgba(255,255,255,0.82);
   border-radius: 8px;
   padding: 7px 10px;
   flex-shrink: 0;
 }
-.ctrl-row {
-  display: flex; align-items: center; gap: 8px;
-  margin-top: 6px;
-}
-.ctrl-btn {
-  width: 30px; height: 30px; border-radius: 7px;
-  background: rgba(0,0,0,0.07);
-  border: none; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 17px; color: #3a3a2a;
-}
-.ctrl-btn:hover { background: rgba(0,0,0,0.14); }
-/* 클릭 가능한 슬라이더: 높이는 3px지만 히트 영역은 위아래 padding으로 넓힌다 */
-.ctrl-slider {
-  flex: 1; cursor: pointer;
-  padding: 7px 0; background-clip: content-box;
-  height: 17px; border-radius: 2px;
-  background: linear-gradient(to right, #3a5a9a 60%, rgba(0,0,0,0.12) 60%);
-}
 .ctrl-team-row {
-  display: flex; gap: 5px; margin-top: 9px;
+  display: flex; gap: 5px; margin-top: 6px;
 }
 .ctrl-team-btn {
   flex: 1; padding: 6px 0; border-radius: 6px; border: none; cursor: pointer;
@@ -480,14 +474,14 @@ html, body {
 
 /* ── 마감 다듬기 ── */
 .today-box, .next-game, .music-block { box-shadow: 0 2px 10px rgba(40,35,25,0.13); }
-.today-game, .upcoming, .todo-block, .record-block, .video-ctrl {
+.today-game, .upcoming, .todo-block, .record-block, .league-ctrl {
   box-shadow: 0 1px 5px rgba(40,35,25,0.05);
   backdrop-filter: blur(3px);
 }
 .record-val, .cd-num, .day-num, .chip-score, .game-score, .gcal-day {
   font-variant-numeric: tabular-nums;
 }
-.ctrl-btn, .cal-nav button, .ctrl-team-btn { transition: background .15s, color .15s; }
+.cal-nav button, .ctrl-team-btn { transition: background .15s, color .15s; }
 .day-cell { transition: background .15s; }
 .day-cell:not(.empty):hover { background: rgba(255,255,255,0.68); }
 .day-cell.today-cell:hover { background: rgba(30,100,60,0.85); }
@@ -497,7 +491,7 @@ html, body {
 
 <div id="app">
   <div class="bg"></div>
-  <video id="bg-video" autoplay muted loop playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.28;pointer-events:none;"></video>
+  <div class="bg-photo" id="bg-photo"></div>
 
   <div class="layout">
 
@@ -618,18 +612,11 @@ html, body {
         </div>
       </div>
 
-      <!-- C-3. 배경 영상 컨트롤 -->
-      <div class="video-ctrl">
+      <!-- C-3. 리그 전환 -->
+      <div class="league-ctrl">
         <div class="section-eyebrow">
-          <span>배경 영상</span>
+          <span>리그</span>
         </div>
-        <div class="ctrl-row">
-          <button class="ctrl-btn" id="vid-play" title="재생/일시정지">⏸</button>
-          <div style="flex:1;font-size:13.5px;color:#7a7060;display:flex;justify-content:space-between;">
-            <span>투명도</span><span id="opacity-val">28%</span>
-          </div>
-        </div>
-        <div class="ctrl-slider" id="opacity-bar" title="클릭해서 투명도 조절" style="margin-top:2px;background:linear-gradient(to right,#3a5a9a 28%,rgba(0,0,0,0.12) 28%)"></div>
         <div class="ctrl-team-row">
           <button class="ctrl-team-btn active" id="btn-kbo">KBO</button>
           <button class="ctrl-team-btn inactive" id="btn-epl">EPL</button>
@@ -657,6 +644,8 @@ html, body {
 
     </div>
   </div>
+
+  <button id="cal-toggle" title="달력 켜기">📅</button>
 </div>
 
 <script>
@@ -679,8 +668,7 @@ const state = {
   gcalClientSecret: '',
   gcalEvents: [],
   gcalTasks: [],
-  bgOpacity: 0.28,
-  bgVideo: '',
+  bgImage: '',   // 속성창 경로. 비어 있으면 팀 홈구장 사진
   kboGames: {},
   kboError: '',
   eplGames: {},
@@ -1177,23 +1165,40 @@ function renderGcal(){
     +`</div>`).join('');
 }
 
-// ─── 배경 영상 ────────────────────────────────
-function defaultBgSrc(){
-  return state.league==='kbo' ? `assets/bg/${state.kboTeam.toLowerCase()}.webm` : '';
+// ─── 경기장 사진 ──────────────────────────────
+// 팀 코드 → 홈구장. 같은 구장을 쓰는 팀(LG·두산)은 사진 한 장을 같이 쓴다.
+const STADIUMS = {
+  LG:'jamsil', DOOSAN:'jamsil', KT:'suwon', SSG:'munhak', NC:'changwon',
+  SAMSUNG:'daegu', LOTTE:'sajik', HANWHA:'daejeon', KIA:'gwangju', HEROES:'gocheok',
+};
+function defaultBgImage(){
+  const st = state.league==='kbo' ? STADIUMS[state.kboTeam] : '';
+  return st ? `assets/stadium/${st}.jpg` : 'assets/stadium/default.jpg';
 }
-function setBgSrc(v,src){
-  v.dataset.src=src;
-  if(src){ v.src=src; v.load(); v.play().catch(()=>{}); }
-  else { v.removeAttribute('src'); v.load(); }
+// 속성창 경로 > 팀 홈구장 > default.jpg 순서로, 실제로 열리는 첫 사진을 쓴다.
+// 하나도 없으면 사진을 숨겨 그라데이션만 보인다.
+function updateBgImage(){
+  const el=document.getElementById('bg-photo');
+  const list=[state.bgImage, defaultBgImage(), 'assets/stadium/default.jpg']
+    .filter((v,i,a)=>v && a.indexOf(v)===i);
+  const key=list.join('|');
+  if(el.dataset.key===key) return;
+  el.dataset.key=key;
+  (function tryNext(i){
+    if(el.dataset.key!==key) return;   // 그 사이 팀이 바뀌었다
+    if(i>=list.length){ el.classList.remove('loaded'); el.style.backgroundImage=''; return; }
+    const img=new Image();
+    img.onload=()=>{ if(el.dataset.key!==key) return; el.style.backgroundImage=`url("${list[i]}")`; el.classList.add('loaded'); };
+    img.onerror=()=>tryNext(i+1);
+    img.src=list[i];
+  })(0);
 }
-function updateBgVideo(){
-  const v=document.getElementById('bg-video');
-  // 속성창 경로 > 팀 기본 영상. 둘 다 없으면 배경 그라데이션만 보인다.
-  const src=state.bgVideo||defaultBgSrc();
-  if(v.dataset.src!==src) setBgSrc(v,src);
-  v.style.opacity=state.bgOpacity;
-  document.getElementById('opacity-val').textContent=Math.round(state.bgOpacity*100)+'%';
-  document.getElementById('opacity-bar').style.background=`linear-gradient(to right,#3a5a9a ${state.bgOpacity*100}%,rgba(0,0,0,0.12) ${state.bgOpacity*100}%)`;
+
+// ─── 달력 켜고 끄기 ────────────────────────────
+// 평소에는 경기장 전경만 보이고, 켰을 때만 달력과 패널이 나온다.
+function setCalendarOn(on){
+  document.getElementById('app').classList.toggle('calendar-on', on);
+  document.getElementById('cal-toggle').title = on ? '달력 끄기' : '달력 켜기';
 }
 
 // ─── 재생 중인 음악 ────────────────────────────
@@ -1270,7 +1275,7 @@ async function refreshAll(){
 }
 function renderAll(){
   renderHeader(); renderTeamBadge(); renderCalendar();
-  renderTodayGame(); renderRecord(); renderTodo(); renderGcal(); updateBgVideo();
+  renderTodayGame(); renderRecord(); renderTodo(); renderGcal(); updateBgImage();
 }
 function changeMonth(delta){
   state.month+=delta;
@@ -1291,61 +1296,6 @@ document.querySelector('.today-game')?.addEventListener('click',()=>{
 document.getElementById('prev-btn')?.addEventListener('click',()=>changeMonth(-1));
 document.getElementById('next-btn')?.addEventListener('click',()=>changeMonth(1));
 
-const bgVid=document.getElementById('bg-video');
-// 내가 직접 멈춘 것인지 기억한다. 아래 canplay 재시도가 이걸 덮어쓰면 안 된다.
-let userPausedVideo=false;
-document.getElementById('vid-play')?.addEventListener('click',()=>{
-  if(bgVid.paused||bgVid.ended){ userPausedVideo=false; bgVid.play().catch(()=>{}); }
-  else { userPausedVideo=true; bgVid.pause(); }
-});
-// 버튼 표시는 항상 실제 재생 상태를 따라간다 (autoplay 실패해도 어긋나지 않음)
-const syncPlayBtn=()=>{document.getElementById('vid-play').textContent=bgVid.paused?'▶':'⏸';};
-bgVid.addEventListener('play',syncPlayBtn);
-bgVid.addEventListener('pause',syncPlayBtn);
-
-// 속성창 경로가 실제 파일과 다를 때(예: .mp4 라고 적었는데 파일은 .webm)
-// 조용히 검은 화면이 되지 않도록 팀 기본 영상으로 되돌린다.
-// src 를 갈아끼운 직후엔 아직 재생 준비가 안 돼 play() 가 무시될 수 있다
-// WE 가 월페이퍼를 멈춰둔 동안에는 되살리면 안 된다 (일시정지의 의미가 없어진다)
-let wePaused=false;
-function resumeVideo(){
-  if(userPausedVideo || wePaused || !bgVid.dataset.src) return;
-  if(bgVid.paused || bgVid.ended) bgVid.play().catch(()=>{});
-}
-bgVid.addEventListener('canplay',resumeVideo);
-// WE 가 월페이퍼를 멈췄다 풀면 문서는 다시 보이는데 영상은 멈춘 채로 남는다
-document.addEventListener('visibilitychange',()=>{ if(!document.hidden) resumeVideo(); });
-
-// 기본 영상 자체가 실패하면 몇 번만 다시 시도하고 포기한다 (무한 재로드 방지)
-let videoErrRetries=0;
-bgVid.addEventListener('error',()=>{
-  const fb=defaultBgSrc();
-  if(fb && bgVid.dataset.src!==fb){ videoErrRetries=0; setBgSrc(bgVid,fb); }
-  else if(bgVid.dataset.src && ++videoErrRetries<=3){
-    const src=bgVid.dataset.src;
-    setTimeout(()=>setBgSrc(bgVid,src), 3000);
-  }
-});
-
-// 감시자 — 멈추는 원인(WE 일시정지 복귀, 디코딩 중단, 브라우저 정책)을 하나씩
-// 쫓는 대신, 재생 중이어야 하는데 프레임이 안 나가면 되살린다.
-let lastVideoTime=-1, videoStalls=0;
-setInterval(()=>{
-  if(userPausedVideo || wePaused || !bgVid.dataset.src) return;
-  if(bgVid.paused || bgVid.ended){ resumeVideo(); videoStalls=0; lastVideoTime=-1; return; }
-  if(bgVid.currentTime===lastVideoTime){
-    // 15초 동안 한 프레임도 안 나갔으면 통째로 다시 로드한다
-    if(++videoStalls>=3){ videoStalls=0; videoErrRetries=0; setBgSrc(bgVid,bgVid.dataset.src); }
-  } else videoStalls=0;
-  lastVideoTime=bgVid.currentTime;
-}, 5000);
-
-// 투명도 바 클릭 → 그 위치 비율로 설정
-document.getElementById('opacity-bar')?.addEventListener('click',e=>{
-  const r=e.currentTarget.getBoundingClientRect();
-  state.bgOpacity=Math.min(1,Math.max(0,(e.clientX-r.left)/r.width));
-  updateBgVideo();
-});
 document.getElementById('btn-kbo')?.addEventListener('click',()=>{
   state.league='kbo';
   document.getElementById('btn-kbo').className='ctrl-team-btn active';
@@ -1371,20 +1321,16 @@ document.querySelectorAll('.open-ext').forEach(b=>{
   b.addEventListener('click',e=>{ e.stopPropagation(); openExternal(b.dataset.key, b.dataset.url); });
 });
 
-// 빈 곳을 두 번 누르면 화면을 숨긴다. 버튼/항목 위에서는 무시한다.
+// 달력 버튼, 또는 빈 곳 더블클릭으로 켜고 끈다. 버튼/항목 위 더블클릭은 무시한다.
+const isCalendarOn=()=>document.getElementById('app').classList.contains('calendar-on');
+document.getElementById('cal-toggle')?.addEventListener('click',()=>setCalendarOn(!isCalendarOn()));
 document.addEventListener('dblclick',e=>{
   if(e.target.closest('button, .todo-row, .gcal-item')) return;
-  document.getElementById('app').classList.toggle('hidden');
+  setCalendarOn(!isCalendarOn());
 });
 
 // ─── WE 속성창 ────────────────────────────────
 window.wallpaperPropertyListener = {
-  // WE 설정의 "다른 프로그램 실행 중 일시 정지" 등으로 월페이퍼가 멈췄다 풀릴 때 호출된다.
-  // 구현하지 않으면 재개된 뒤에도 배경 영상이 멈춘 채로 남는다.
-  setPaused(isPaused){
-    wePaused = !!isPaused;
-    if(wePaused) bgVid.pause(); else resumeVideo();
-  },
   applyUserProperties(props){
     let needRefresh=false, needGcal=false;
     if(props.kboteam&&props.kboteam.value){state.kboTeam=props.kboteam.value;needRefresh=true;}
@@ -1392,8 +1338,7 @@ window.wallpaperPropertyListener = {
     if(props.eplteam){state.eplTeam=props.eplteam.value;state.eplTeamId=null;state.eplTeamList=null;needRefresh=true;}
     if(props.eplapikey){state.eplApiKey=props.eplapikey.value;state.eplTeamId=null;state.eplTeamList=null;needRefresh=true;}
     if(props.league){state.league=props.league.value;}
-    if(props.bgvideo){state.bgVideo=props.bgvideo.value;updateBgVideo();}
-    if(props.bgopacity){state.bgOpacity=parseFloat(props.bgopacity.value)||0.28;updateBgVideo();}
+    if(props.bgimage){state.bgImage=(props.bgimage.value||'').trim();updateBgImage();}
     if(props.todolist){state.todoItems=parseTodo(props.todolist.value);}
     if(props.eventlist){state.personalEvents=parseEvents(props.eventlist.value);}
     if(props.gcalrefreshtoken){state.gcalRefreshToken=props.gcalrefreshtoken.value;needGcal=true;}
@@ -1441,8 +1386,21 @@ document.addEventListener('DOMContentLoaded',()=>{
 </script>
 
 <style>
-#app { transition: opacity 0.4s; }
-#app.hidden { opacity: 0; pointer-events: none; }
+/* 달력이 꺼져 있으면 패널을 숨기고 경기장만 보인다 */
+.layout { transition: opacity 0.4s; }
+#app:not(.calendar-on) .layout { opacity: 0; pointer-events: none; }
+#cal-toggle {
+  position: absolute; right: 18px; bottom: 14px; z-index: 3;
+  width: 38px; height: 38px; border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.5);
+  background: rgba(20,24,20,0.45); color: #fff;
+  backdrop-filter: blur(4px);
+  font-size: 18px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0.65; transition: opacity .15s, background .15s;
+}
+#cal-toggle:hover { opacity: 1; background: rgba(20,24,20,0.65); }
+#app.calendar-on #cal-toggle { background: #1e2e1e; opacity: 0.9; }
 
 /* 위 블록에 없는 동적 DOM 전용 스타일만 둔다 (중복은 위 블록을 덮어써서 헷갈린다) */
 .no-game { font-size: 16px; color: #9a9080; padding: 3px 0; line-height: 1.4; white-space: pre-line; }
